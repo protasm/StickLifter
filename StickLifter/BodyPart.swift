@@ -55,6 +55,24 @@ class BodyPart: SCNNode {
 
     // MARK: - Connection Point Vectors
     func connectionPoint(_ point: ConnectionPoint) -> SCNVector3 {
+        guard let geometry = geometry else { return .zero }
+
+        let bounds = geometry.boundingBox
+        let min = bounds.min
+        let max = bounds.max
+        let center = SCNVector3(
+            (min.x + max.x) / 2,
+            (min.y + max.y) / 2,
+            (min.z + max.z) / 2
+        )
+
+        switch point {
+        case .X1: return SCNVector3(min.x, center.y, center.z)
+        case .X2: return SCNVector3(max.x, center.y, center.z)
+        case .Y1: return SCNVector3(center.x, max.y, center.z)
+        case .Y2: return SCNVector3(center.x, min.y, center.z)
+        case .Z1: return SCNVector3(center.x, center.y, max.z)
+        case .Z2: return SCNVector3(center.x, center.y, min.z)
         let h = Float(height / 2)
         let r = Float(radius)
         // SCNCapsule's height covers only the cylindrical section; add the radius
