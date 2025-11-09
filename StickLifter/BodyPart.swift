@@ -57,12 +57,15 @@ class BodyPart: SCNNode {
     func connectionPoint(_ point: ConnectionPoint) -> SCNVector3 {
         let h = Float(height / 2)
         let r = Float(radius)
+        // SCNCapsule's height covers only the cylindrical section; add the radius
+        // so Y-based connection points reach the spherical end caps as well.
+        let yExtent = h + r
 
         switch point {
         case .X1: return SCNVector3(-r, 0, 0)
         case .X2: return SCNVector3( r, 0, 0)
-        case .Y1: return SCNVector3(0,  h, 0)
-        case .Y2: return SCNVector3(0, -h, 0)
+        case .Y1: return SCNVector3(0,  yExtent, 0)
+        case .Y2: return SCNVector3(0, -yExtent, 0)
         case .Z1: return SCNVector3(0, 0,  r)
         case .Z2: return SCNVector3(0, 0, -r)
         }
