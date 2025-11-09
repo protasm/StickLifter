@@ -10,7 +10,6 @@ import SceneKit
 import UIKit
 
 class SceneFactory {
-
     // MARK: - Checkerboard Material
     static func checkerboardMat(squareSize: Int = 16, imageSize: Int = 64) -> SCNMaterial {
         let size = CGSize(width: imageSize, height: imageSize)
@@ -42,7 +41,6 @@ class SceneFactory {
 
         return mat
     }
-
 
     // MARK: - Orthographic Camera
     static func orthoCam(scale: Double = 4.0, zPosition: Float = 8.0) -> SCNNode {

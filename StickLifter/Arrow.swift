@@ -1,3 +1,11 @@
+//
+//  Arrow.swift
+//  StickLifter
+//
+//  Created by Jonathan Stroble on 11/9/25.
+//
+
+
 import SceneKit
 import UIKit
 

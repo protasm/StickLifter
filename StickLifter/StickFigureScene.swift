@@ -3,74 +3,83 @@ import UIKit
 
 func StickFigureScene() -> SCNScene {
     let scene = SCNScene()
+    
     scene.background.contents = UIColor.white
 
-    // MARK: - Layout Constants
-    let spacer: CGFloat = 0
+    // MARK: - Layout constants
+    let spacer: CGFloat = 0.0
+    let rot90 = SCNVector3(0, 0, CGFloat.pi / 2)
 
-
-    // MARK: - Head
+    // MARK: - Parts
     let head = BodyPart(
         name: "Head",
         radius: 0.5,
         height: 1.0,
         color: .white,
-        axis: .transverse,
-        showConnectionMarkers: true
+        showMarkers: true
     )
 
-    // MARK: - NeckJoint
-    let neckJoint = BodyPart(
-        name: "NeckJoint",
-        radius: 0.05,
-        height: 0.1,
-        color: .systemGreen,
-        axis: .transverse,
-        showConnectionMarkers: true
-    )
-
-    // MARK: - Neck
     let neck = BodyPart(
         name: "Neck",
         radius: 0.1,
         height: 0.4,
         color: .white,
-        axis: .transverse,
-        showConnectionMarkers: true
+        showMarkers: true
     )
-    
-    // MARK: - ShoulderJoint
-//    let shoulderJoint = BodyPart(
-//        name: "ShoulderJoint",
-//        radius: 0.05,
-//        height: 0.1,
-//        color: .systemGreen,
-//        axis: .transverse,
-//        showConnectionMarkers: true
-//    )
 
-    // MARK: - Shoulders
-//    let shoulders = BodyPart(
-//        name: "Shoulders",
-//        radius: 0.1,
-//        height: 2.0,
-//        color: .white,
-//        axis: .sagittal,
-//        showConnectionMarkers: true
-//    )
+    let shoulders = BodyPart(
+        name: "Shoulders",
+        radius: 0.1,
+        height: 2.0,
+        color: .white,
+        showMarkers: true
+    )
+
+    let torso = BodyPart(
+        name: "Torso",
+        radius: 0.4,
+        height: 3.0,
+        color: .white,
+        showMarkers: true
+    )
+
+    let leftArm = BodyPart(
+        name: "LeftArm",
+        radius: 0.1,
+        height: 2.0,
+        color: .white,
+        showMarkers: true
+    )
+
+    // Optional reference arrow (shows “forward” Z+)
+    let forwardArrow = Arrow(length: 1.0)
+
+    forwardArrow.position = SCNVector3(0, 1.5, 1.0)
+
+    scene.rootNode.addChildNode(forwardArrow)
 
     // MARK: - Connections
-    head.connect(from: .left, to: neckJoint, at: .inferior, spacer: spacer)
-    neckJoint.connect(from: .inferior, to: neck, at: .superior, spacer: spacer)
-//    neck.connect(from: .inferior, to: shoulderJoint, at: .superior, spacer: spacer)
-//    shoulderJoint.connect(from: .inferior, to: shoulders, at: .left, spacer: spacer)
+    // Head sits atop the neck
+    head.connect(from: .Y2, to: neck, at: .Y1)
 
-    // MARK: - Scene Setup
-    scene.rootNode.addChildNode(head)
+    // Neck connects downward to shoulders (rotated horizontally)
+//    neck.connect(from: .Y2, to: shoulders, at: .X1, rotation: rot90, spacer: spacer)
+
+    // Shoulders connect downward to torso
+//    shoulders.connect(from: .X2, to: torso, at: .Y1, rotation: rot90, spacer: spacer)
+
+    // Left arm connects to the left side of shoulders, hanging vertically
+//    shoulders.connect(from: .Z2, to: leftArm, at: .Y1, rotation: rot90, spacer: spacer)
+
+    // MARK: - Scene hierarchy root
+    let figureRoot = SCNNode()
+
+    scene.rootNode.addChildNode(figureRoot)
+    figureRoot.addChildNode(head)
 
     // MARK: - Camera
     let cameraNode = SceneFactory.orthoCam(scale: 4.0, zPosition: 8.0)
-    
+
     scene.rootNode.addChildNode(cameraNode)
 
     return scene
