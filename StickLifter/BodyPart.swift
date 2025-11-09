@@ -107,10 +107,10 @@ class BodyPart: SCNNode {
                  at otherPoint: ConnectionPoint,
                  spacer: CGFloat = 0.0) {
 
-        // world position of our connection point
-        let selfPos = self.convertPosition(connectionPoint(selfPoint), to: nil)
+        // local position of our connection point
+        let anchor = connectionPoint(selfPoint)
 
-        // the direction that points outward from us
+        // the direction that points outward from us (in local space)
         let selfDir = directionVector(for: selfPoint)
 
         // how far the child’s own connection point is from its center
@@ -121,9 +121,9 @@ class BodyPart: SCNNode {
 
         // place the child so its chosen connection point sits exactly at our connection point
         other.position = SCNVector3(
-            x: selfPos.x + selfDir.x * totalOffset,
-            y: selfPos.y + selfDir.y * totalOffset,
-            z: selfPos.z + selfDir.z * totalOffset
+            x: anchor.x + selfDir.x * totalOffset,
+            y: anchor.y + selfDir.y * totalOffset,
+            z: anchor.z + selfDir.z * totalOffset
         )
 
         self.addChildNode(other)
