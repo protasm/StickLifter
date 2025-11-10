@@ -55,17 +55,74 @@ class BodyPart: SCNNode {
     
     // MARK: - Connection Point Vectors
     func connectionPoint(_ point: ConnectionPoint) -> SCNVector3 {
-        guard let geometry = geometry else { return SCNVector3Zero }
-        
-        let bounds = geometry.boundingBox
-        let min = bounds.min
-        let max = bounds.max
-        let center = SCNVector3(
-            (min.x + max.x) / 2,
-            (min.y + max.y) / 2,
-            (min.z + max.z) / 2
+        // SCNCapsule's `height` already accounts for the hemispherical end caps,
+        // so half the value gives the distance from the centre to either pole.
+        let radial = Float(radius)
+        let axial = Float(height / 2)
+
+        switch point {
+        case .X1: return SCNVector3(-radial, 0, 0)
+        case .X2: return SCNVector3( radial, 0, 0)
+        case .Y1: return SCNVector3(0,  axial, 0)
+        case .Y2: return SCNVector3(0, -axial, 0)
+        case .Z1: return SCNVector3(0, 0,  radial)
+        case .Z2: return SCNVector3(0, 0, -radial)
+        }
+    }
+
+    // MARK: - Connection Logic
+    @discardableResult
+    func connect(from selfPoint: ConnectionPoint,
+                 to other: BodyPart,
+                 at otherPoint: ConnectionPoint,
+                 rotation: SCNVector3? = nil,
+                 spacer: CGFloat = 0.0) -> SCNNode {
+
+        // Create a joint container for hierarchy and optional visualization
+        let joint = SCNNode()
+        joint.name = "\(self.name ?? "Parent")_to_\(other.name ?? "Child")_joint"
+
+        // Optional rotation for the child before placement
+        if let rot = rotation {
+            other.eulerAngles = rot
+        }
+
+        // Get the parent connection point in this part’s local space
+        let parentAnchorLocal = connectionPoint(selfPoint)
+
+        // Prepare joint marker
+        let jointMarker = SCNSphere(radius: 0.05)
+        let mat = SCNMaterial()
+        mat.diffuse.contents = UIColor.systemGreen
+        jointMarker.firstMaterial = mat
+        joint.geometry = jointMarker
+        joint.position = parentAnchorLocal
+
+        // Build hierarchy before aligning the child so convertPosition works
+        self.addChildNode(joint)
+        joint.addChildNode(other)
+
+        // Determine the child anchor location in joint space taking rotation into account
+        let childAnchorLocal = other.connectionPoint(otherPoint)
+        let childAnchorInJoint = other.convertPosition(childAnchorLocal, to: joint)
+
+        other.position = SCNVector3(
+            -childAnchorInJoint.x,
+            -childAnchorInJoint.y,
+            -childAnchorInJoint.z
         )
-        
+
+        // Optional spacer along the parent's direction vector
+        let dir = directionVector(for: selfPoint)
+        other.position.x += dir.x * Float(spacer)
+        other.position.y += dir.y * Float(spacer)
+        other.position.z += dir.z * Float(spacer)
+
+        return joint
+    }
+
+    // MARK: - Helpers
+    private func directionVector(for point: ConnectionPoint) -> SCNVector3 {
         switch point {
         case .X1: return SCNVector3(min.x, center.y, center.z)
         case .X2: return SCNVector3(max.x, center.y, center.z)
