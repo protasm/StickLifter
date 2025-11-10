@@ -55,16 +55,18 @@ class BodyPart: SCNNode {
 
     // MARK: - Connection Point Vectors
     func connectionPoint(_ point: ConnectionPoint) -> SCNVector3 {
-        let h = Float(height / 2)
-        let r = Float(radius)
+        // SCNCapsule's `height` already accounts for the hemispherical end caps,
+        // so half the value gives the distance from the centre to either pole.
+        let radial = Float(radius)
+        let axial = Float(height / 2)
 
         switch point {
-        case .X1: return SCNVector3(-r, 0, 0)
-        case .X2: return SCNVector3( r, 0, 0)
-        case .Y1: return SCNVector3(0,  h, 0)
-        case .Y2: return SCNVector3(0, -h, 0)
-        case .Z1: return SCNVector3(0, 0,  r)
-        case .Z2: return SCNVector3(0, 0, -r)
+        case .X1: return SCNVector3(-radial, 0, 0)
+        case .X2: return SCNVector3( radial, 0, 0)
+        case .Y1: return SCNVector3(0,  axial, 0)
+        case .Y2: return SCNVector3(0, -axial, 0)
+        case .Z1: return SCNVector3(0, 0,  radial)
+        case .Z2: return SCNVector3(0, 0, -radial)
         }
     }
 
@@ -85,16 +87,29 @@ class BodyPart: SCNNode {
             other.eulerAngles = rot
         }
 
-        // Get both connection points in *this* part’s local space
+        // Get the parent connection point in this part’s local space
         let parentAnchorLocal = connectionPoint(selfPoint)
-        let childAnchorLocal  = other.connectionPoint(otherPoint)
 
-        // Position the child so its connection point coincides with ours
-        // We simply subtract its connection offset from our own anchor
+        // Prepare joint marker
+        let jointMarker = SCNSphere(radius: 0.05)
+        let mat = SCNMaterial()
+        mat.diffuse.contents = UIColor.systemGreen
+        jointMarker.firstMaterial = mat
+        joint.geometry = jointMarker
+        joint.position = parentAnchorLocal
+
+        // Build hierarchy before aligning the child so convertPosition works
+        self.addChildNode(joint)
+        joint.addChildNode(other)
+
+        // Determine the child anchor location in joint space taking rotation into account
+        let childAnchorLocal = other.connectionPoint(otherPoint)
+        let childAnchorInJoint = other.convertPosition(childAnchorLocal, to: joint)
+
         other.position = SCNVector3(
-            parentAnchorLocal.x - childAnchorLocal.x,
-            parentAnchorLocal.y - childAnchorLocal.y,
-            parentAnchorLocal.z - childAnchorLocal.z
+            -childAnchorInJoint.x,
+            -childAnchorInJoint.y,
+            -childAnchorInJoint.z
         )
 
         // Optional spacer along the parent's direction vector
@@ -103,26 +118,10 @@ class BodyPart: SCNNode {
         other.position.y += dir.y * Float(spacer)
         other.position.z += dir.z * Float(spacer)
 
-        // Small visual joint marker
-        let jointMarker = SCNSphere(radius: 0.05)
-        let mat = SCNMaterial()
-        mat.diffuse.contents = UIColor.systemGreen
-        jointMarker.firstMaterial = mat
-        joint.geometry = jointMarker
-        joint.position = parentAnchorLocal
-
-        // Hierarchy
-        self.addChildNode(joint)
-        joint.addChildNode(other)
-
         return joint
     }
 
     // MARK: - Helpers
-    private func vectorLength(_ v: SCNVector3) -> Float {
-        sqrt(v.x * v.x + v.y * v.y + v.z * v.z)
-    }
-
     private func directionVector(for point: ConnectionPoint) -> SCNVector3 {
         switch point {
         case .X1: return SCNVector3(-1, 0, 0)
